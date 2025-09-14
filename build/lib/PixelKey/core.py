@@ -247,4 +247,3 @@ def decrypt_with_image_key(packet: Dict[str, Any], image_path: str) -> bytes:
     # decrypt
     aesgcm = AESGCM(aes_key)
     plaintext = aesgcm.decrypt(nonce, ciphertext, None)
-    return plaintext
