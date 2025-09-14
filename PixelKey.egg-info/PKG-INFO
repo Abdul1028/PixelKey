@@ -1,0 +1,130 @@
+Metadata-Version: 2.1
+Name: PixelKey
+Version: 0.1.0
+Summary: AES-GCM encryption with key derivation from image pixels and nonce hiding in image region.
+Home-page: https://github.com/Abdul1028/PixelKey
+Author: Abdul Shaikh
+Author-email: rasoolas2003@gmail.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Security :: Cryptography
+Classifier: Topic :: Multimedia :: Graphics
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# PixelKey
+
+`PixelKey` is a Python package that provides a unique method for encrypting and decrypting messages by leveraging image data for cryptographic key derivation and nonce hiding. This approach adds an interesting layer of security by making the cryptographic operations dependent on a shared secret image.
+
+## Features
+
+-   **Image-Derived AES Key:** The AES-GCM encryption key is derived from the SHA256 hash of the entire image's pixel data.
+-   **Region-Hidden Nonce:** The AES-GCM nonce is masked using an HMAC-SHA256 derived from a specific, user-defined region within the image.
+-   **Customizable:** Easily integrate into your projects and customize the image and region used for encryption.
+
+## Installation
+
+YouYou can install `PixelKey` via pip:
+
+```bash
+pip install PixelKey
+```
+
+Alternatively, you can install from source:
+
+```bash
+git clone https://github.com/yourusername/pixelkey_aes.git
+cd PixelKey
+pip install .
+```
+
+## Usage
+
+To use the `PixelKey` package, you need a shared image file between the sender and receiver. Both parties must also agree on a specific region within that image.
+
+### Encryption
+
+```python
+from PixelKey.core import encrypt_with_image_key
+import os
+
+# Your secret image file (must be identical on sender and receiver)
+SECRET_IMAGE = "path/to/your/image.jpg"
+
+# Region coordinates (x, y, width, height) - must be agreed upon by both parties
+# Example: top-left 10,10 and region 20x20 pixels
+REGION = (10, 10, 20, 20)
+
+MESSAGE = "Hi friend — this is secret using image-region nonce hiding!".encode("utf-8")
+
+# Ensure image file exists for the demo
+if not os.path.exists(SECRET_IMAGE):
+    print(f"Error: Please place a shared image named {SECRET_IMAGE} in the working directory.")
+    exit(1)
+
+# Encrypt the message
+encrypted_packet = encrypt_with_image_key(MESSAGE, SECRET_IMAGE, REGION)
+
+print("Encrypted Packet (JSON):")
+print(encrypted_packet)
+```
+
+### Decryption
+
+To decrypt the message, the receiver needs the `encrypted_packet`, the `SECRET_IMAGE`, and the `REGION` coordinates.
+
+```python
+from PixelKey.core import decrypt_with_image_key
+# Assuming encrypted_packet is received from the sender
+# encrypted_packet = { ... received dictionary ... }
+
+# Your secret image file (must be identical on sender and receiver)
+SECRET_IMAGE = "path/to/your/image.jpg"
+
+# Decrypt the message
+recovered_plaintext = decrypt_with_image_key(encrypted_packet, SECRET_IMAGE)
+
+print("Recovered Plaintext:", recovered_plaintext.decode("utf-8"))
+```
+
+## API Reference
+
+### `encrypt_with_image_key(plaintext: bytes, image_path: str, region_coords: Tuple[int, int, int, int]) -> Dict[str, Any]`
+
+Encrypts plaintext data using AES-GCM. The AES key is derived from the full image, and the AES nonce is masked using an HMAC derived from a specified image region.
+
+-   `plaintext`: The data to be encrypted, as a bytes object.
+-   `image_path`: The file path to the image used for key derivation.
+-   `region_coords`: A tuple `(x, y, w, h)` specifying the top-left corner and dimensions of the region used for nonce masking.
+
+Returns a dictionary with base64-encoded ciphertext and hidden nonce, along with the region coordinates.
+
+### `decrypt_with_image_key(packet: Dict[str, Any], image_path: str) -> bytes`
+
+Decrypts an encrypted packet using the same image and region coordinates.
+
+-   `packet`: A dictionary containing the encrypted data (e.g., `{"ciphertext_b64": "...", "hidden_nonce_b64": "...", "region_coords": [x, y, w, h]}`).
+-   `image_path`: The file path to the image used for key derivation and nonce recovery.
+
+Returns the decrypted plaintext as a bytes object.
+
+### Utility Functions
+
+The following utility functions are also exposed, though typically not needed for direct package usage:
+
+-   `load_image_as_rgb_bytes(image_path: str) -> Tuple[bytes, Tuple[int, int]]`
+-   `extract_region_bytes(image_path: str, x: int, y: int, w: int, h: int) -> bytes`
+-   `derive_aes_key_from_image(image_path: str) -> bytes`
+-   `derive_region_key(image_path: str, x: int, y: int, w: int, h: int) -> bytes`
+
+## Contributing
+
+Contributions are welcome! Please feel free to open issues or submit pull requests on the [GitHub repository](https://github.com/yourusername/PixelKey).
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
